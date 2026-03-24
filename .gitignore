@@ -1,0 +1,8 @@
+wildfire_env/
+*.tif
+*.png
+*.pdf
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
+.DS_Store
