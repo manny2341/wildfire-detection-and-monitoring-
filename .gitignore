@@ -7,3 +7,4 @@ __pycache__/
 *.pyc
 .DS_Store
 !yolo_severity_detection.png
+!wildfire_notebook_final.ipynb
