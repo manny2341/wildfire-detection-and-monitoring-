@@ -1,0 +1,8 @@
+timestamp,region,fire_detected,total_burned_km2,low_km2,moderate_km2,high_km2,extreme_km2,max_dnbr
+2026-04-11_02-36,Rhodes Greece,True,700.54,368.16,111.27,61.84,159.27,394.916
+2026-04-11_02-36,Evros Greece,True,100.02,87.08,11.75,1.14,0.05,15.603
+2026-04-11_02-36,Tenerife Spain,False,0,0,0,0,0,0
+2026-04-11_03-05,Rhodes Greece,True,700.54,368.16,111.27,61.84,159.27,394.916
+2026-04-11_03-29,Rhodes Greece,True,682.47,370.36,114.12,67.31,130.67,2.0
+2026-04-11_03-29,Evros Greece,True,100.02,87.08,11.75,1.14,0.05,1.783
+2026-04-11_03-29,Tenerife Spain,False,0,0,0,0,0,0

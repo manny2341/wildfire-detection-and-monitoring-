@@ -1,0 +1,31 @@
+{
+  "regions": [
+    {
+      "name": "Rhodes Greece",
+      "bbox": {
+        "west": 27.7,
+        "east": 28.3,
+        "south": 35.9,
+        "north": 36.5
+      }
+    },
+    {
+      "name": "Evros Greece",
+      "bbox": {
+        "west": 26.0,
+        "east": 26.8,
+        "south": 41.0,
+        "north": 41.8
+      }
+    },
+    {
+      "name": "Tenerife Spain",
+      "bbox": {
+        "west": -16.9,
+        "east": -16.1,
+        "south": 28.0,
+        "north": 28.6
+      }
+    }
+  ]
+}

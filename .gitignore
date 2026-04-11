@@ -1,10 +1,21 @@
+# Credentials — never commit these
+.env
+monitor_config.json
+
+# Temporary monitoring files
+_temp/
+
+# Python environment
 wildfire_env/
-*.tif
-*.png
-*.pdf
 __pycache__/
 .ipynb_checkpoints/
 *.pyc
 .DS_Store
+
+# Large satellite data files
+*.tif
+*.pdf
+
+# Keep key output images and notebook
 !yolo_severity_detection.png
 !wildfire_notebook_final.ipynb

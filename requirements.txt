@@ -1,0 +1,14 @@
+openeo
+pandas
+numpy
+rioxarray
+matplotlib
+pyproj
+python-dateutil
+rasterio
+geopandas
+seaborn
+python-dotenv
+streamlit>=1.28
+opencv-python>=4.8
+ultralytics>=8.0
