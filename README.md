@@ -54,6 +54,9 @@ python wildfire_detection.py
 
 # Run the automatic monitoring system
 python wildfire_monitor.py
+
+# Retrain the v3 model from scratch
+python retrain_v3.py
 ```
 
 ---
@@ -65,6 +68,7 @@ wildfire-detection-and-monitoring/
 ├── wildfire_app.py              # Streamlit web application
 ├── wildfire_detection.py        # Standalone detection script
 ├── wildfire_monitor.py          # Automatic monitoring script
+├── retrain_v3.py                # Multi-region v3 retraining script
 ├── index.ipynb                  # Main analysis notebook
 ├── wildfire_notebook2.ipynb     # Extended pipeline notebook
 ├── wildfire_notebook_final.ipynb# Final results notebook
@@ -72,9 +76,13 @@ wildfire-detection-and-monitoring/
 ├── monitor_config.json          # Monitoring configuration
 ├── monitor_regions.json         # Regions being monitored
 ├── monitoring_log.csv           # Monitoring event log
-├── yolov8n.pt                   # Base YOLOv8 model weights
-├── runs/                        # YOLO training outputs
-├── yolo_dataset/                # Generated training tiles
+├── yolov8n.pt                   # Base YOLOv8 nano weights
+├── yolov8s.pt                   # Base YOLOv8 small weights
+├── runs/detect/
+│   ├── wildfire_severity_v2/    # v2 model weights + results
+│   └── wildfire_severity_v3/    # v3 model weights + results
+├── yolo_dataset/                # Rhodes training tiles
+├── yolo_dataset_v3/             # Multi-region training tiles
 └── monitoring_maps/             # Saved monitoring outputs
 ```
 
@@ -106,13 +114,12 @@ Severity Class      Fire Map
 ## Detection Methods
 
 ### Method 1 — YOLOv8 (Detection + Severity Classification)
-- Fine-tuned YOLOv8 nano model trained on our own satellite data
+- Fine-tuned YOLOv8 model trained on our own satellite data
 - Uses transfer learning from NBR labels — no manual labelling needed
 - Splits satellite image into 640×640 pixel tiles (6.4 km × 6.4 km each)
 - Detects fire zones AND classifies severity in one single pass
 - Outputs colour-coded bounding boxes with confidence scores
-- Trained for 41 epochs on 476 labelled tiles
-- Achieved 94.1% mAP accuracy
+- Two versions available — see YOLO Models section below
 
 ### Method 2 — NBR Spectral Index
 - Uses Near-Infrared (B08) and SWIR (B12) Sentinel-2 bands
@@ -124,6 +131,77 @@ Severity Class      Fire Map
 
 ---
 
+## YOLO Models
+
+The app includes two trained models. You can switch between them live from the **sidebar** in the web app — no code changes needed.
+
+---
+
+### Model v2 — Single Region
+
+| Detail | Value |
+|---|---|
+| Architecture | YOLOv8 nano |
+| Trained on | Rhodes, Greece 2023 |
+| Training tiles | 476 |
+| Epochs | 41 |
+| Precision | 93.0% |
+| Recall | 88.1% |
+| mAP50 | 94.1% |
+| mAP50-95 | 80.9% |
+
+**Strengths:** High accuracy on Rhodes data, fast and lightweight  
+**Weakness:** Only learned from one fire — may struggle on unseen regions
+
+---
+
+### Model v3 — Multi Region
+
+| Detail | Value |
+|---|---|
+| Architecture | YOLOv8 small (4× more powerful than nano) |
+| Trained on | Rhodes + Evros (Greece) + Tenerife (Spain) 2023 |
+| Training tiles | 450+ across 3 regions |
+| Epochs | 80 |
+| Precision | 76.6% |
+| Recall | 86.5% |
+| mAP50 | 84.9% |
+| mAP50-95 | 71.5% |
+
+**Strengths:** Generalises across multiple countries and landscapes  
+**Weakness:** Lower headline score but more honest — tested on regions it hasn't fully seen before
+
+**Per-class breakdown (v3):**
+
+| Class | Precision | Recall | mAP50 |
+|---|---|---|---|
+| Unburned | 92.0% | 100% | 99.3% |
+| Low Severity | 85.0% | 98.0% | 96.8% |
+| Moderate Severity | 87.6% | 87.0% | 92.1% |
+| High Severity | 72.6% | 73.3% | 71.4% |
+| Extreme Severity | 45.5% | 50.0% | 48.4% |
+
+---
+
+### v2 vs v3 Comparison
+
+| Feature | v2 | v3 |
+|---|---|---|
+| Architecture | YOLOv8 nano | YOLOv8 small |
+| Regions trained on | 1 (Rhodes) | 3 (Rhodes, Evros, Tenerife) |
+| Training tiles | 476 | 450+ |
+| mAP50 | 94.1% | 84.9% |
+| Best for | Known regions | Unseen / new regions |
+| Model size | 6.3 MB | 22.5 MB |
+
+---
+
+### How to Switch Models in the App
+
+Open the app and look at the **sidebar on the left**. Under **Model Version** select either **v2** or **v3**. The app reloads instantly with the chosen model — no code editing required.
+
+---
+
 ## YOLO Training Pipeline
 
 | Step | Action | Result |
@@ -132,21 +210,8 @@ Severity Class      Fire Map
 | 2 | Generate NBR severity labels | 5 class labels per pixel |
 | 3 | Split into 640×640 tiles | 80 base tiles |
 | 4 | Augment burned class tiles | 476 training tiles total |
-| 5 | Fine-tune YOLOv8 | 41 epochs, early stopping |
-| 6 | Evaluate performance | 94.1% mAP achieved |
-
----
-
-## YOLO Model Performance
-
-| Metric | Score |
-|---|---|
-| Precision | 93.0% |
-| Recall | 88.1% |
-| mAP50 | 94.1% |
-| mAP50-95 | 80.9% |
-| Training tiles | 476 |
-| Epochs | 41 |
+| 5 | Fine-tune YOLOv8 | 41 epochs (v2) / 80 epochs (v3) |
+| 6 | Evaluate performance | 94.1% mAP (v2) / 84.9% mAP (v3) |
 
 ---
 
@@ -178,7 +243,7 @@ Severity Class      Fire Map
 |---|---|---|
 | Type | Deep Learning AI | Physics Formula |
 | Output | Bounding boxes + severity | Pixel-level map |
-| Accuracy | 94.1% mAP | Within 2–5% of official |
+| Accuracy | 94.1% mAP (v2) | Within 2–5% of official |
 | Training | Fine-tuned on NBR labels | No training needed |
 | Best for | Real-time camera/drone | Satellite imagery |
 
