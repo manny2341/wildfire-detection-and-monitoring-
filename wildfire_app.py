@@ -71,13 +71,17 @@ st.markdown("""
 
 # ── LOAD MODEL ───────────────────────────────────────────────
 @st.cache_resource
-def load_model():
-    model_path = "runs/detect/wildfire_severity_v2/weights/best.pt"
+def load_model(version):
+    model_path = f"runs/detect/wildfire_severity_{version}/weights/best.pt"
     if os.path.exists(model_path):
         return YOLO(model_path), True
     return YOLO("yolov8n.pt"), False
 
-model, using_trained_model = load_model()
+# Model selector in session state
+if "model_version" not in st.session_state:
+    st.session_state.model_version = "v2"
+
+model, using_trained_model = load_model(st.session_state.model_version)
 
 # ── HELPER FUNCTIONS ─────────────────────────────────────────
 def load_tif_rgb(tif_path):
@@ -190,9 +194,25 @@ with st.sidebar:
     st.markdown("### About")
     st.info("YOLOv8 + Sentinel-2 NBR analysis for wildfire detection and monitoring.")
 
+    st.markdown("### Model Version")
+    selected = st.radio(
+        "Select YOLO model",
+        options=["v2", "v3"],
+        index=0 if st.session_state.model_version == "v2" else 1,
+        horizontal=True,
+        help="v2 = trained on Rhodes only | v3 = trained on Rhodes + Evros + Tenerife"
+    )
+    if selected != st.session_state.model_version:
+        st.session_state.model_version = selected
+        st.cache_resource.clear()
+        st.rerun()
+
     st.markdown("### Model Info")
     if using_trained_model:
-        st.success("Custom YOLOv8 — mAP: 94.1%")
+        if st.session_state.model_version == "v2":
+            st.success("YOLOv8n v2 — Rhodes only | mAP: 94.1%")
+        else:
+            st.success("YOLOv8s v3 — 3 Regions | mAP: 84.9%")
     else:
         st.warning("Custom model not found. Using generic YOLOv8 — results may vary.")
     st.success("NBR Accuracy: Within 2-5%")
@@ -214,7 +234,7 @@ with st.sidebar:
 
     st.markdown("### System Health")
     checks = [
-        ("Trained Model",   os.path.exists("runs/detect/wildfire_severity_v2/weights/best.pt")),
+        ("Trained Model",   os.path.exists(f"runs/detect/wildfire_severity_{st.session_state.model_version}/weights/best.pt")),
         ("Monitor Config",  os.path.exists("monitor_config.json")),
         ("Monitor Regions", os.path.exists("monitor_regions.json")),
         ("Monitoring Maps", os.path.exists("monitoring_maps")),
