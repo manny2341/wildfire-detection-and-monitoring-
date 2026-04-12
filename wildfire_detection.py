@@ -12,12 +12,12 @@ import matplotlib.patches as mpatches
 from matplotlib.backends.backend_pdf import PdfPages
 import datetime
 
-# ── STEP 1: CONNECT TO COPERNICUS ───────────────────────────
+# ── STEP 1: CONNECT TO COPERNICUS 
 connection = openeo.connect("openeo.dataspace.copernicus.eu")
 connection.authenticate_oidc()
 print("Connected and authenticated successfully!")
 
-# ── STEP 2: DEFINE STUDY AREA & TIME PERIODS ────────────────
+# ── STEP 2: DEFINE STUDY AREA & TIME PERIODS 
 spatial_extent = {
     "west": 27.7, "east": 28.3,
     "south": 35.9, "north": 36.5
@@ -26,7 +26,7 @@ pre_fire  = ["2023-07-01", "2023-07-17"]
 post_fire = ["2023-07-25", "2023-08-15"]
 print("Area of interest set: Rhodes, Greece")
 
-# ── STEP 3: DOWNLOAD SATELLITE DATA ─────────────────────────
+# ── STEP 3: DOWNLOAD SATELLITE DATA 
 pre_fire_cube = connection.load_collection(
     "SENTINEL2_L2A",
     temporal_extent=pre_fire,
@@ -54,7 +54,7 @@ print("Downloading post-fire NBR...")
 post_NBR.download("post_fire_nbr.tif")
 print("NBR data downloaded!")
 
-# ── STEP 4: LOAD & VISUALISE NBR ────────────────────────────
+# ── STEP 4: LOAD & VISUALISE NBR 
 with rasterio.open("pre_fire_nbr.tif") as src:
     pre_nbr = src.read(1).astype(float)
 with rasterio.open("post_fire_nbr.tif") as src:
@@ -77,7 +77,7 @@ plt.tight_layout()
 plt.savefig("wildfire_analysis.png", dpi=150, bbox_inches="tight")
 plt.show()
 
-# ── STEP 5: BURN SEVERITY CLASSIFICATION MODEL ───────────────
+# ── STEP 5: BURN SEVERITY CLASSIFICATION MODEL 
 pixel_area_km2 = 0.0001
 classified = np.zeros_like(dnbr, dtype=np.uint8)
 classified[dnbr < 0.1]                     = 0
@@ -104,7 +104,7 @@ print(f"Extreme severity:  {extreme   * pixel_area_km2:.2f} km2")
 print("=" * 40)
 print(f"TOTAL BURNED:      {total_burned:.2f} km2")
 
-# ── STEP 6: CLASSIFICATION MAP ───────────────────────────────
+# ── STEP 6: CLASSIFICATION MAP 
 colors = {
     0: (0.2, 0.6, 0.2), 1: (1.0, 1.0, 0.0),
     2: (1.0, 0.6, 0.0), 3: (1.0, 0.2, 0.0),
@@ -130,7 +130,7 @@ plt.tight_layout()
 plt.savefig("wildfire_classification_map.png", dpi=150, bbox_inches="tight")
 plt.show()
 
-# ── STEP 7: NDVI VEGETATION ANALYSIS ────────────────────────
+# ── STEP 7: NDVI VEGETATION ANALYSIS 
 pre_ndvi_cube = connection.load_collection(
     "SENTINEL2_L2A", temporal_extent=pre_fire,
     spatial_extent=spatial_extent, bands=["B04", "B08"], max_cloud_cover=20
@@ -158,7 +158,7 @@ print(f"\nPre-fire avg NDVI:  {np.nanmean(pre_ndvi):.3f}")
 print(f"Post-fire avg NDVI: {np.nanmean(post_ndvi):.3f}")
 print(f"Average NDVI loss:  {np.nanmean(ndvi_loss):.3f}")
 
-# ── STEP 8: TRUE COLOUR RGB ──────────────────────────────────
+# ── STEP 8: TRUE COLOUR RGB 
 pre_rgb_cube = connection.load_collection(
     "SENTINEL2_L2A", temporal_extent=pre_fire,
     spatial_extent=spatial_extent, bands=["B04","B03","B02"], max_cloud_cover=20
@@ -170,7 +170,7 @@ post_rgb_cube = connection.load_collection(
 pre_rgb_cube.download("pre_fire_rgb.tif")
 post_rgb_cube.download("post_fire_rgb.tif")
 
-# ── STEP 9: MODEL VALIDATION - 3 WILDFIRES ───────────────────
+# ── STEP 9: MODEL VALIDATION - 3 WILDFIRES 
 def analyze_wildfire(connection, name, spatial_extent, pre_period, post_period):
     print(f"\nAnalysing: {name}")
     pre_cube = connection.load_collection(

@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ── PATHS ─────────────────────────────────────────────────────
+# ── PATHS 
 BASE_DIR     = Path(__file__).parent
 CONFIG_FILE  = BASE_DIR / "monitor_config.json"
 REGIONS_FILE = BASE_DIR / "monitor_regions.json"
@@ -36,7 +36,7 @@ TEMP_DIR     = BASE_DIR / "_temp"
 MAPS_DIR.mkdir(exist_ok=True)
 TEMP_DIR.mkdir(exist_ok=True)
 
-# ── LOAD CONFIG ───────────────────────────────────────────────
+# ── LOAD CONFIG 
 def load_config():
     with open(CONFIG_FILE) as f:
         return json.load(f)
@@ -45,7 +45,7 @@ def load_regions():
     with open(REGIONS_FILE) as f:
         return json.load(f)["regions"]
 
-# ── CONNECT TO COPERNICUS ─────────────────────────────────────
+# ── CONNECT TO COPERNICUS 
 def connect_copernicus():
     print("Connecting to Copernicus Data Space...")
     conn = openeo.connect("openeo.dataspace.copernicus.eu")
@@ -53,7 +53,7 @@ def connect_copernicus():
     print("Connected and authenticated.")
     return conn
 
-# ── DATE HELPERS ──────────────────────────────────────────────
+# ── DATE HELPERS 
 def get_date_ranges():
     today = datetime.now(timezone.utc)
     # Baseline: 20–14 days ago (stable, cloud-free reference)
@@ -64,7 +64,7 @@ def get_date_ranges():
     latest_end     = today.strftime("%Y-%m-%d")
     return baseline_start, baseline_end, latest_start, latest_end
 
-# ── DOWNLOAD NBR ──────────────────────────────────────────────
+# ── DOWNLOAD NBR 
 def download_nbr(conn, bbox, period, output_path):
     cube = conn.load_collection(
         "SENTINEL2_L2A",
@@ -78,7 +78,7 @@ def download_nbr(conn, bbox, period, output_path):
           (cube.band("B08") + cube.band("B12"))
     nbr.download(str(output_path))
 
-# ── COMPUTE dNBR ──────────────────────────────────────────────
+# ── COMPUTE dNBR 
 def compute_dnbr(baseline_path, latest_path):
     with rasterio.open(baseline_path) as src:
         baseline = src.read(1).astype(float)
@@ -103,7 +103,7 @@ def compute_dnbr(baseline_path, latest_path):
     # Positive dNBR = vegetation loss = fire/burn
     return baseline - latest
 
-# ── DETECT FIRE ───────────────────────────────────────────────
+# ── DETECT FIRE 
 def detect_fire(dnbr, config):
     threshold  = config["thresholds"]["dnbr_threshold"]
     min_pixels = config["thresholds"]["fire_pixel_min"]
@@ -131,7 +131,7 @@ def detect_fire(dnbr, config):
         "max_dnbr":         round(float(np.nanmax(dnbr)) if np.any(~np.isnan(dnbr)) else 0.0, 3),
     }
 
-# ── GENERATE SEVERITY MAP ─────────────────────────────────────
+# ── GENERATE SEVERITY MAP 
 def generate_map(dnbr, region_name, timestamp):
     classified = np.zeros_like(dnbr, dtype=np.uint8)
     classified[dnbr < 0.1]                     = 0
@@ -181,7 +181,7 @@ def generate_map(dnbr, region_name, timestamp):
     print(f"  Map saved: {map_path}")
     return str(map_path)
 
-# ── SEND EMAIL ALERT ──────────────────────────────────────────
+# ── SEND EMAIL ALERT 
 def send_email(region_name, results, map_path, config, timestamp):
     email_cfg = config["email"]
 
@@ -247,7 +247,7 @@ This is an automated daily alert from your Wildfire Monitoring System.
     except Exception as e:
         print(f"  Email failed: {e}")
 
-# ── LOG RESULT TO CSV ─────────────────────────────────────────
+# ── LOG RESULT TO CSV 
 def log_result(region_name, results, timestamp):
     fieldnames = [
         "timestamp", "region", "fire_detected",
@@ -272,7 +272,7 @@ def log_result(region_name, results, timestamp):
         })
     print(f"  Logged to {LOG_FILE.name}")
 
-# ── MAIN ──────────────────────────────────────────────────────
+# ── MAIN 
 def main():
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M")
     print(f"\n{'='*50}")

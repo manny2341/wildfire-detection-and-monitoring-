@@ -16,6 +16,16 @@ __pycache__/
 *.tif
 *.pdf
 
+# Large training tile folders (too big for GitHub)
+yolo_tiles/
+yolo_tiles_Evros_Greece_2023/
+yolo_tiles_Tenerife_Spain_2023/
+yolo_dataset/
+yolo_dataset_v3/
+
+# Log files
+*.log
+
 # Keep key output images and notebook
 !yolo_severity_detection.png
 !wildfire_notebook_final.ipynb
