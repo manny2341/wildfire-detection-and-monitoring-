@@ -229,11 +229,27 @@ Open the app and look at the **sidebar on the left**. Under **Model Version** se
 
 ## Validation Results — Summer 2023
 
-| Wildfire | YOLO Zones | YOLO mAP | NBR Burned | Official | Accuracy |
+### Model v2 — YOLOv8 nano (trained on Rhodes only)
+
+| Wildfire | YOLO Zones | mAP50 | NBR Burned | Official | Accuracy |
 |---|---|---|---|---|---|
 | Rhodes, Greece | 219 zones | 94.1% | 801 km² | ~750–800 km² | Excellent |
 | Evros, Greece | 101 zones | 94.1% | 1,987 km² | ~2,000 km² | Excellent |
 | Tenerife, Spain | 10 zones | 94.1% | 719 km² | ~700 km² | Excellent |
+
+> mAP50 is the same across all regions because it reflects the model's overall training score, not a per-region test. v2 was only trained on Rhodes so performance on Evros and Tenerife is not fully reliable.
+
+---
+
+### Model v3 — YOLOv8 small (trained on all 3 regions)
+
+| Wildfire | YOLO Zones | Avg Confidence | Max Confidence | NBR Burned | Official | Accuracy |
+|---|---|---|---|---|---|---|
+| Rhodes, Greece | 260 zones | 77% | 100% | 801 km² | ~750–800 km² | Excellent |
+| Evros, Greece | 425 zones | 86% | 100% | 1,987 km² | ~2,000 km² | Excellent |
+| Tenerife, Spain | 255 zones | 81% | 99% | 719 km² | ~700 km² | Excellent |
+
+> v3 was trained on all 3 regions. Confidence scores are significantly higher and more fire zones are detected because the model has learned from each of these landscapes directly.
 
 ---
 
