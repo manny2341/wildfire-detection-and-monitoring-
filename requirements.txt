@@ -1,0 +1,12 @@
+openeo
+pandas
+numpy
+yolo
+rioxarray
+matplotlib
+pyproj
+python-dateutil
+rasterio
+geopandas
+seaborn
+python-dotenv
