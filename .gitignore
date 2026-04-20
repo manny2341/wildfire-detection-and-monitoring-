@@ -14,7 +14,6 @@ __pycache__/
 
 # Large satellite data files
 *.tif
-*.pdf
 
 # Large training tile folders (too big for GitHub)
 yolo_tiles/
