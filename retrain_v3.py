@@ -109,8 +109,17 @@ def tile_and_label(rgb_image, classified, region_name, counters):
     h, w    = rgb_image.shape[:2]
     written = 0
 
+    # ── Leakage-safe spatial-block split ─────────────────────────────────
+    # Per region, the rightmost ~20% column of x-tiles is reserved for val.
+    # Train and val tiles are NEVER spatially adjacent within the same region,
+    # so the model is genuinely tested on unseen forest patches rather than
+    # neighbouring views of the same fire (which would leak fire signature
+    # into validation).
+    n_x_tiles = max(1, (w - TILE_SIZE) // TILE_SIZE + 1)
+    val_x_start = int(n_x_tiles * 0.8)
+
     for y in range(0, h - TILE_SIZE, TILE_SIZE):
-        for x in range(0, w - TILE_SIZE, TILE_SIZE):
+        for x_idx, x in enumerate(range(0, w - TILE_SIZE, TILE_SIZE)):
             img_tile = rgb_image[y:y+TILE_SIZE, x:x+TILE_SIZE]
             cls_tile = classified[y:y+TILE_SIZE, x:x+TILE_SIZE]
 
@@ -138,7 +147,8 @@ def tile_and_label(rgb_image, classified, region_name, counters):
                 continue
 
             n      = counters[0]
-            split  = "val" if n % 5 == 0 else "train"
+            # Spatial-block split: rightmost 20% of x-tiles → val
+            split  = "val" if x_idx >= val_x_start else "train"
             img_p  = os.path.join(DATASET_V3, "images", split, f"tile_{n:05d}.png")
             lbl_p  = os.path.join(DATASET_V3, "labels", split, f"tile_{n:05d}.txt")
 
@@ -167,16 +177,21 @@ def main():
     counters = [0]   # mutable counter passed into tile_and_label
 
     # 2. Copy existing Rhodes tiles + labels
-    print("\n[1/4] Copying existing Rhodes tiles...")
+    # NOTE: Rhodes tiles were originally split using a random tile-index
+    # method (legacy from v2). We preserve that inherited split here rather
+    # than re-shuffle it. For a fully spatially-clean run, regenerate Rhodes
+    # tiles from the source TIFs using the leakage-safe spatial-block split
+    # in tile_and_label() above.
+    print("\n[1/4] Copying existing Rhodes tiles (preserving inherited split)...")
     for split in ["train", "val"]:
         imgs   = sorted(glob.glob(os.path.join(BASE, "yolo_dataset", "images", split, "*.png")))
         labels = sorted(glob.glob(os.path.join(BASE, "yolo_dataset", "labels", split, "*.txt")))
         paired = [(i, l) for i, l in zip(imgs, labels)]
         for img_p, lbl_p in paired:
             n     = counters[0]
-            split_ = "val" if n % 5 == 0 else "train"
-            shutil.copy(img_p, os.path.join(DATASET_V3, "images", split_, f"tile_{n:05d}.png"))
-            shutil.copy(lbl_p, os.path.join(DATASET_V3, "labels", split_, f"tile_{n:05d}.txt"))
+            # Preserve original split — do NOT re-shuffle here
+            shutil.copy(img_p, os.path.join(DATASET_V3, "images", split, f"tile_{n:05d}.png"))
+            shutil.copy(lbl_p, os.path.join(DATASET_V3, "labels", split, f"tile_{n:05d}.txt"))
             counters[0] += 1
     print(f"   Rhodes tiles copied: {counters[0]}")
 

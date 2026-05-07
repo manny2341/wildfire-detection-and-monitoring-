@@ -279,6 +279,49 @@ Open the app and look at the **sidebar on the left**. Under **Model Version** se
 
 ---
 
+## Honest Limitations & Methodology Notes
+
+This project has been audited for data leakage. Disclosing what was found is the
+fair thing to do, and what most portfolio projects skip.
+
+### YOLO accuracy figures are likely optimistic on unseen regions
+
+The reported YOLO mAP50 numbers (94.1% for v2, 84.9% for v3) come from validation
+tiles that share scenes — and therefore fire dynamics, vegetation, and weather —
+with the training tiles. Adjacent satellite tiles are spatially correlated,
+which inflates measured accuracy.
+
+**Realistic expectation on a brand-new fire region the model has never seen:**
+roughly 65–80% mAP50.
+
+The current `retrain_v3.py` has been updated with a **leakage-safe spatial-block
+split**: per region, the rightmost 20% column of x-tiles is reserved for
+validation, ensuring train and val tiles are not spatially adjacent. This
+applies to Evros and Tenerife from now on. Rhodes preserves the inherited
+v2 split for backwards compatibility — to retrain Rhodes with the same
+spatial-block discipline, regenerate the tiles from the source TIFs through
+`tile_and_label()`.
+
+### NBR-based burned area numbers are unaffected
+
+The reported burned-area km² figures (Rhodes 801 km², Evros 1,987 km²,
+Tenerife 719 km²) come from the **NBR spectral index** — a deterministic
+formula applied per pixel, not a learned model. These numbers are independent
+of train/val splitting and remain defensible. The "matches official ESA
+estimates within 2–5%" claim refers to NBR output, not YOLO.
+
+### What "audited for data leakage" means in this repo
+
+- ✅ Spatial-block train/val split for new regions (Evros, Tenerife)
+- ✅ NBR pipeline is split-independent (deterministic formula)
+- ⚠️ Rhodes tiles inherit the v2 random-index split; users wanting fully
+     consistent splitting should regenerate Rhodes from its source TIF
+- ⚠️ For "true unseen-region" performance estimates, leave-one-region-out
+     cross-validation (train on 2 regions, test on the 3rd) is the
+     gold standard and not yet included
+
+---
+
 ## Output Files
 
 | File | Description |
