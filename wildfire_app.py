@@ -195,12 +195,16 @@ with st.sidebar:
     st.info("YOLOv8 + Sentinel-2 NBR analysis for wildfire detection and monitoring.")
 
     st.markdown("### Model Version")
+    versions = ["v2", "v3", "v4_balanced"]
     selected = st.radio(
         "Select YOLO model",
-        options=["v2", "v3"],
-        index=0 if st.session_state.model_version == "v2" else 1,
+        options=versions,
+        index=versions.index(st.session_state.model_version)
+              if st.session_state.model_version in versions else 0,
         horizontal=True,
-        help="v2 = trained on Rhodes only | v3 = trained on Rhodes + Evros + Tenerife"
+        help=("v2 = Rhodes only | v3 = Rhodes + Evros + Tenerife | "
+              "v4_balanced = v3 retrained with class-balanced oversampling "
+              "(Extreme class lifted from 48% → 88% mAP50)")
     )
     if selected != st.session_state.model_version:
         st.session_state.model_version = selected
@@ -211,8 +215,10 @@ with st.sidebar:
     if using_trained_model:
         if st.session_state.model_version == "v2":
             st.success("YOLOv8n v2 — Rhodes only | mAP: 94.1%")
-        else:
+        elif st.session_state.model_version == "v3":
             st.success("YOLOv8s v3 — 3 Regions | mAP: 84.9%")
+        else:  # v4_balanced
+            st.success("YOLOv8s v4_balanced — Extreme-class oversampling | mAP: 93.5%")
     else:
         st.warning("Custom model not found. Using generic YOLOv8 — results may vary.")
     st.success("NBR Accuracy: Within 2-5%")

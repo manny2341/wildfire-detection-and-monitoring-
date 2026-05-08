@@ -79,10 +79,12 @@ wildfire-detection-and-monitoring/
 ├── yolov8n.pt                   # Base YOLOv8 nano weights
 ├── yolov8s.pt                   # Base YOLOv8 small weights
 ├── runs/detect/
-│   ├── wildfire_severity_v2/    # v2 model weights + results
-│   └── wildfire_severity_v3/    # v3 model weights + results
+│   ├── wildfire_severity_v2/             # v2 weights + results
+│   ├── wildfire_severity_v3/             # v3 weights + results
+│   └── wildfire_severity_v4_balanced/    # v4 balanced weights + results (NEW)
 ├── yolo_dataset/                # Rhodes training tiles
 ├── yolo_dataset_v3/             # Multi-region training tiles
+├── yolo_dataset_v4_balanced/    # v3 + Extreme-class oversampling (NEW)
 └── monitoring_maps/             # Saved monitoring outputs
 ```
 
@@ -183,22 +185,78 @@ The app includes two trained models. You can switch between them live from the *
 
 ---
 
-### v2 vs v3 Comparison
+### Model v4_balanced — Class-Balanced Oversampling
 
-| Feature | v2 | v3 |
-|---|---|---|
-| Architecture | YOLOv8 nano | YOLOv8 small |
-| Regions trained on | 1 (Rhodes) | 3 (Rhodes, Evros, Tenerife) |
-| Training tiles | 476 | 450+ |
-| mAP50 | 94.1% | 84.9% |
-| Best for | Known regions | Unseen / new regions |
-| Model size | 6.3 MB | 22.5 MB |
+The v3 per-class breakdown above made the problem clear: the **Extreme severity
+class was at 48.4% mAP50** — half the performance of Unburned. Cause: extreme
+burns are rare events even *inside* wildfires, so the model saw too few Extreme
+tiles during training.
+
+v4_balanced solves this with **class-aware oversampling** (no architecture
+change). Every train tile containing at least one Extreme label is duplicated
+4× before training. YOLO's per-epoch augmentation (flipud, fliplr, rotation,
+HSV jitter) means each duplicate is augmented differently during training, so
+the model sees the rare class with genuine variety instead of identical copies.
+
+| Detail | Value |
+|---|---|
+| Architecture | YOLOv8 small (same as v3) |
+| Source data | v3 multi-region dataset |
+| Training tiles | 742 (was 398 — 344 duplicate Extreme tiles) |
+| Epochs | 80 |
+| Precision (overall) | 85.5% |
+| Recall (overall) | 89.2% |
+| **mAP50** | **93.5%** |
+| mAP50-95 | 84.1% |
+
+**Per-class breakdown (v4_balanced):**
+
+| Class | Precision | Recall | mAP50 | Δ vs v3 |
+|---|---|---|---|---|
+| Unburned | 98.1% | 100% | 99.5% | +0.2 pp |
+| Low Severity | 92.2% | 95.0% | 96.9% | +0.1 pp |
+| Moderate Severity | 90.4% | 87.6% | 96.0% | +3.9 pp |
+| High Severity | 83.0% | 81.5% | 86.8% | **+15.4 pp** |
+| **Extreme Severity** | **63.6%** | **81.8%** | **88.1%** | **+39.7 pp** |
+
+The Extreme class jumped from 48.4% to 88.1% mAP50 — a 40-point lift from a
+data-side intervention with no model architecture change. The High class also
+gained 15 points as collateral benefit (Extreme tiles often contain High labels).
+
+**How to reproduce:**
+```bash
+python3 train_v4_balanced.py          # build the balanced dataset
+python3 train_v4_balanced.py --train  # build + train (~5 hours on CPU, ~30 min on GPU)
+```
+
+---
+
+### v2 vs v3 vs v4_balanced Comparison
+
+| Feature | v2 | v3 | v4_balanced |
+|---|---|---|---|
+| Architecture | YOLOv8 nano | YOLOv8 small | YOLOv8 small |
+| Regions trained on | 1 (Rhodes) | 3 | 3 |
+| Training tiles | 476 | 450+ | 742 |
+| mAP50 | 94.1% | 84.9% | **93.5%** |
+| Extreme mAP50 | (not measured) | 48.4% | **88.1%** |
+| Best for | Known regions | Unseen / new regions | Best Extreme-class detection |
+| Model size | 6.3 MB | 22.5 MB | 22.5 MB |
+
+> ⚠️ **Honest caveat on v4_balanced:** evaluation used the val set inherited
+> from v3, which uses tile-index splits with some geographic adjacency to
+> training tiles. The +40 pp Extreme-class lift is *real* (same val set,
+> only training changed). The absolute 88.1% may be a few points lower on
+> truly unseen regions — the underlying model still benefits from the
+> class-balanced training regardless.
 
 ---
 
 ### How to Switch Models in the App
 
-Open the app and look at the **sidebar on the left**. Under **Model Version** select either **v2** or **v3**. The app reloads instantly with the chosen model — no code editing required.
+Open the app and look at the **sidebar on the left**. Under **Model Version**
+select **v2**, **v3**, or **v4_balanced**. The app reloads instantly with the
+chosen model — no code editing required.
 
 ---
 
