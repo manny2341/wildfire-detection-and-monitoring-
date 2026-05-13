@@ -380,6 +380,86 @@ estimates within 2–5%" claim refers to NBR output, not YOLO.
 
 ---
 
+## Ethics & Responsible Use
+
+Most portfolio ML projects skip the deployment-ethics question. This
+section is here because the alternative — silence — becomes a liability
+the moment the model is taken seriously.
+
+### ⚠️ Liability — Use & Limitations
+
+This is **research and educational** code, not a certified
+emergency-response system. The model is validated on three Mediterranean
+wildfire events from summer 2023.
+
+Predictions should **not** be used as the sole basis for evacuation,
+firefighting deployment, or insurance-claim decisions. For real-world
+use, pair the output with official sources:
+
+- [Copernicus Emergency Management Service](https://emergency.copernicus.eu/)
+- [NASA FIRMS Active Fire Data](https://firms.modaps.eosdis.nasa.gov/)
+- Your national fire authority (e.g. CAL FIRE, UK Fire & Rescue Service,
+  Hellenic Fire Service, etc.)
+
+Under the EU AI Act (Article 73, fully applicable from August 2026), AI
+systems contributing to environmental harm may trigger serious-incident
+reporting obligations. Operators deploying this kind of model in a
+high-risk context should account for that.
+
+### 🌍 Geographic Coverage & Bias
+
+Training data covers **only Northern Mediterranean conifer / mixed
+forest ecosystems** (Rhodes, Evros, Tenerife — all summer 2023).
+
+The model has **not** been evaluated on:
+
+- Tropical / equatorial fires (Congo Basin, Amazon, Southeast Asia)
+- Boreal forest fires (Siberia, Northern Canada)
+- Eucalyptus and Australian bushland
+- Arid grassland fires (Sahel, Outback)
+
+Africa accounts for roughly 70% of global burned area annually but is
+**not represented** in the training set. Expect significantly degraded
+performance outside the training distribution.
+
+v3 added multi-region training (3 Mediterranean regions) to mitigate
+single-region bias — closing the broader gap to the Global South
+remains a known open task and the largest fairness issue in this
+project.
+
+### 🔒 Privacy
+
+Sentinel-2 imagery (10 m / pixel) is too coarse to identify individuals
+but does reveal buildings, roads, and vehicles. This pipeline does
+**not** currently apply automatic property masking.
+
+For deployment over populated areas, integrate a building mask before
+publishing inference outputs — e.g.:
+
+- [OpenStreetMap building footprints](https://www.openstreetmap.org/)
+- [Microsoft Building Footprints (global)](https://github.com/microsoft/GlobalMLBuildingFootprints)
+- Local cadastre or land-use registry data
+
+The EU AI Act (in effect from August 2026) and GDPR apply transparency
+obligations even to environmental sensing systems that incidentally
+capture private property.
+
+### 🏛️ Indigenous Rights & Jurisdictional Use
+
+This project deploys no ground sensors, so no physical infrastructure
+on tribal land is involved. However, the model's outputs *can* affect
+indigenous and First Nations communities when applied over their
+territories — e.g. the Amazon, Northern Canadian Inuit lands, or
+Aboriginal Australia.
+
+Users monitoring such regions should apply **Free, Prior and Informed
+Consent (FPIC)** — recognised under UN Declaration on the Rights of
+Indigenous Peoples (UNDRIP) Article 31 — before publishing burned-area
+assessments or alerts that could affect those communities' interests
+or land-management decisions.
+
+---
+
 ## Output Files
 
 | File | Description |
